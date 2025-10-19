@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 90%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .product-card {
+            background: #f8f9ff;
+            border: 2px solid #e0e6ff;
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-color: #4facfe;
+        }
+
+        .product-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .product-description {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .product-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .product-price {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4facfe;
+        }
+
+        .product-category {
+            background: #e0e6ff;
+            color: #4facfe;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .product-package {
+            background: #f0f0f0;
+            color: #666;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-left: 8px;
+        }
+
+        .qr-section {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .qr-code {
+            width: 120px;
+            height: 120px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin: 10px auto;
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+
+        .error {
+            text-align: center;
+            padding: 50px;
+            color: #e74c3c;
+            background: #ffe6e6;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .admin-section {
+            background: #f8f9ff;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+            border: 2px solid #e0e6ff;
+        }
+
+        .admin-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .admin-link {
+            display: inline-block;
+            background: #4facfe;
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background 0.3s ease;
+            margin-right: 15px;
+        }
+
+        .admin-link:hover {
+            background: #3d8bfe;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                margin: 10px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛍️ Order Management System</h1>
+            <p>Scan QR codes to order products quickly and easily</p>
+        </div>
+        
+        <div class="content">
+            <div id="loading" class="loading">
+                <p>Loading products...</p>
+            </div>
+            
+            <div id="error" class="error" style="display: none;">
+                <p>Failed to load products. Please check your internet connection and try again.</p>
+            </div>
+            
+            <div id="products-container" class="products-grid" style="display: none;">
+                <!-- Products will be loaded here dynamically -->
+            </div>
+
+            <div class="admin-section">
+                <h3>📊 Admin Panel</h3>
+                <p>Access your Google Sheets to manage inventory and orders:</p>
+                <br>
+                <a href="#" id="sheets-link" class="admin-link" target="_blank">Open Google Sheets</a>
+                <a href="#" onclick="refreshProducts()" class="admin-link">Refresh Products</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Load products when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProducts();
+        });
+
+        function refreshProducts() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('products-container').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            loadProducts();
+        }
+    </script>
+</body>
+</html>

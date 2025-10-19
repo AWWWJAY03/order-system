@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCash Payment - Order Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%);
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .gcash-logo {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            padding: 30px;
+            text-align: center;
+        }
+
+        .order-summary {
+            background: #f8f9ff;
+            border: 2px solid #e0e6ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .order-summary h3 {
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #00b4db;
+        }
+
+        .payment-section {
+            background: #f0fdf4;
+            border: 2px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .qr-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            display: block;
+            border-radius: 8px;
+            border: 3px solid #00b4db;
+        }
+
+        .payment-instructions {
+            background: #fff3cd;
+            border: 2px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .payment-instructions h4 {
+            color: #856404;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .payment-instructions ol {
+            color: #856404;
+            padding-left: 20px;
+        }
+
+        .payment-instructions li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .amount-display {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #00b4db;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            background: #00b4db;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: #0083b0;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .confirmation-section {
+            background: #e6ffe6;
+            border: 2px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 25px;
+        }
+
+        .confirmation-section h4 {
+            color: #059669;
+            margin-bottom: 15px;
+        }
+
+        .confirmation-section p {
+            color: #047857;
+            line-height: 1.6;
+        }
+
+        .order-id {
+            font-family: monospace;
+            background: #f3f4f6;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #374151;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+
+        .error {
+            background: #ffe6e6;
+            color: #e74c3c;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .qr-code {
+                width: 180px;
+                height: 180px;
+            }
+
+            .amount-display {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="gcash-logo">💳 GCash</div>
+            <h1>Complete Payment</h1>
+            <p>Secure and instant payment</p>
+        </div>
+        
+        <div class="content">
+            <div id="loading" class="loading">
+                <p>Loading payment details...</p>
+            </div>
+
+            <div id="error" class="error" style="display: none;">
+                <!-- Error messages will appear here -->
+            </div>
+
+            <div id="payment-content" style="display: none;">
+                <div class="order-summary" id="order-summary">
+                    <h3>📋 Order Summary</h3>
+                    <!-- Order details will be loaded here -->
+                </div>
+
+                <div class="amount-display" id="amount-display">
+                    <!-- Amount will be displayed here -->
+                </div>
+
+                <div class="payment-section">
+                    <h3 style="color: #059669; margin-bottom: 15px;">💰 Pay with GCash</h3>
+                    <p style="color: #047857; margin-bottom: 20px;">
+                        Scan the QR code below using your GCash app to complete the payment
+                    </p>
+                    
+                    <div class="qr-container">
+                        <img src="QRPH.png" alt="GCash QR Code" class="qr-code" id="gcash-qr">
+                    </div>
+                </div>
+
+                <div class="payment-instructions">
+                    <h4>📱 How to Pay with GCash:</h4>
+                    <ol>
+                        <li>Open your GCash mobile app</li>
+                        <li>Tap "Pay QR" or scan QR code icon</li>
+                        <li>Point your camera at the QR code above</li>
+                        <li>Enter the exact amount: <strong id="payment-amount"></strong></li>
+                        <li>Add a reference note (optional): <strong id="order-ref"></strong></li>
+                        <li>Review details and tap "Pay Now"</li>
+                        <li>Wait for payment confirmation</li>
+                    </ol>
+                </div>
+
+                <div class="confirmation-section">
+                    <h4>✅ After Payment:</h4>
+                    <p>
+                        Your order has been received with Order ID: <span class="order-id" id="display-order-id"></span>
+                        <br><br>
+                        Once payment is confirmed by our admin, your order will be processed for shipping via J&T Express. 
+                        You will receive a tracking number for delivery updates.
+                        <br><br>
+                        <strong>Important:</strong> Please keep your GCash payment reference for our records.
+                    </p>
+                </div>
+
+                <div style="text-align: center; margin-top: 30px;">
+                    <a href="index.html" class="btn btn-secondary">🏠 Back to Home</a>
+                    <a href="#" onclick="window.print()" class="btn">🖨️ Print Receipt</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let orderDetails = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderId = urlParams.get('order_id');
+            const amount = urlParams.get('amount');
+            
+            if (!orderId || !amount) {
+                showError('Invalid payment link. Please place your order again.');
+                return;
+            }
+
+            loadPaymentDetails(orderId, amount);
+        });
+
+        async function loadPaymentDetails(orderId, amount) {
+            try {
+                // In a real implementation, you would fetch order details from the backend
+                // For now, we'll display the payment interface with the provided data
+                
+                const formattedAmount = parseFloat(amount).toFixed(2);
+                
+                document.getElementById('amount-display').textContent = `₱${formattedAmount}`;
+                document.getElementById('payment-amount').textContent = `₱${formattedAmount}`;
+                document.getElementById('order-ref').textContent = `Order #${orderId}`;
+                document.getElementById('display-order-id').textContent = orderId;
+                
+                // Create order summary
+                const orderSummary = document.getElementById('order-summary');
+                orderSummary.innerHTML = `
+                    <h3>📋 Order Summary</h3>
+                    <div class="summary-row">
+                        <span>Order ID:</span>
+                        <span>#${orderId}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Date:</span>
+                        <span>${new Date().toLocaleDateString()}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Payment Method:</span>
+                        <span>GCash</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Status:</span>
+                        <span>Pending Payment</span>
+                    </div>
+                    <div class="summary-row">
+                        <span><strong>Total Amount:</strong></span>
+                        <span><strong>₱${formattedAmount}</strong></span>
+                    </div>
+                `;
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('payment-content').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading payment details:', error);
+                showError('Failed to load payment details. Please try again.');
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // Handle QR code image error
+        document.getElementById('gcash-qr').addEventListener('error', function() {
+            this.style.display = 'none';
+            const container = this.parentElement;
+            container.innerHTML = `
+                <div style="padding: 40px; color: #666; text-align: center; border: 2px dashed #ddd; border-radius: 8px;">
+                    <p>⚠️ GCash QR Code Image Not Found</p>
+                    <p style="font-size: 0.9em; margin-top: 10px;">
+                        Please add your QRPH.png file to display the payment QR code
+                    </p>
+                </div>
+            `;
+        });
+
+        // Print styles
+        const printStyles = `
+            <style media="print">
+                body * { visibility: hidden; }
+                .container, .container * { visibility: visible; }
+                .container { 
+                    position: absolute; 
+                    left: 0; 
+                    top: 0; 
+                    width: 100% !important; 
+                    box-shadow: none !important; 
+                }
+                .btn { display: none !important; }
+            </style>
+        `;
+        document.head.insertAdjacentHTML('beforeend', printStyles);
+    </script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+name: Deploy Order Management System to GitHub Pages
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Build and test job
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package.json
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Install Playwright browsers
+        run: |
+          cd backend
+          npx playwright install --with-deps
+
+      - name: Validate frontend files
+        run: |
+          # Check if all required frontend files exist
+          test -f frontend/index.html
+          test -f frontend/order.html
+          test -f frontend/gcash.html
+          test -f frontend/script.js
+          test -f frontend/QRPH.png
+          echo "✅ All frontend files are present"
+
+      - name: Validate backend files
+        run: |
+          # Check if all required backend files exist
+          test -f backend/Code.gs
+          test -f backend/jt_booking.js
+          test -f backend/package.json
+          echo "✅ All backend files are present"
+
+      - name: Test JavaScript syntax
+        run: |
+          # Basic syntax check for frontend JavaScript
+          node -c frontend/script.js
+          echo "✅ Frontend JavaScript syntax is valid"
+
+      - name: Test Node.js application
+        run: |
+          cd backend
+          # Basic syntax check for Node.js files
+          node -c jt_booking.js
+          echo "✅ Backend Node.js syntax is valid"
+
+      - name: Prepare frontend for deployment
+        run: |
+          # Copy frontend files to deployment directory
+          mkdir -p _site
+          cp -r frontend/* _site/
+          
+          # Create a simple robots.txt
+          echo "User-agent: *" > _site/robots.txt
+          echo "Allow: /" >> _site/robots.txt
+          
+          # Create a simple sitemap
+          cat > _site/sitemap.xml << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+            <url>
+              <loc>https://\${{ github.repository_owner }}.github.io/\${{ github.event.repository.name }}/</loc>
+              <changefreq>weekly</changefreq>
+              <priority>1.0</priority>
+            </url>
+            <url>
+              <loc>https://\${{ github.repository_owner }}.github.io/\${{ github.event.repository.name }}/order.html</loc>
+              <changefreq>weekly</changefreq>
+              <priority>0.8</priority>
+            </url>
+          </urlset>
+          EOF
+          
+          echo "✅ Frontend prepared for deployment"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-build
+          path: _site/
+
+  # Deploy job
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-build
+          path: _site/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Output deployment URL
+        run: |
+          echo "🚀 Site deployed successfully!"
+          echo "📱 Frontend URL: ${{ steps.deployment.outputs.page_url }}"
+          echo "🔗 Order page: ${{ steps.deployment.outputs.page_url }}order.html"
+          echo "💳 Payment page: ${{ steps.deployment.outputs.page_url }}gcash.html"
+
+  # Notify deployment status
+  notify:
+    runs-on: ubuntu-latest
+    needs: [build, deploy]
+    if: always()
+    steps:
+      - name: Deployment Status
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            echo "✅ Deployment completed successfully!"
+            echo "Your order management system is now live at:"
+            echo "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+          else
+            echo "❌ Deployment failed. Please check the logs above."
+          fi
